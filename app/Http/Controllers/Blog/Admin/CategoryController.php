@@ -8,8 +8,29 @@ use App\Models\BlogCategory;
 use App\Repositories\BlogCategoryRepository;
 use Illuminate\Support\Str;
 
+/**
+ * Управление категориями блога
+ *
+ * Class CategoryController
+ * @package App\Http\Controllers\Blog\Admin
+ */
 class CategoryController extends BaseController
 {
+    /**
+     * @var BlogCategoryRepository
+     */
+    private $blogCategoryRepository;
+
+    /**
+     * CategoryController constructor.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->blogCategoryRepository = app(BlogCategoryRepository::class);
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -17,7 +38,9 @@ class CategoryController extends BaseController
      */
     public function index()
     {
-        $paginator = BlogCategory::paginate(5);
+        /*$paginator = BlogCategory::paginate(5);*/
+        $paginator = $this->blogCategoryRepository->getAllWithPaginate(5);
+
 
         return view('blog.admin.categories.index', compact('paginator'));
     }
@@ -30,7 +53,7 @@ class CategoryController extends BaseController
     public function create()
     {
         $item = new BlogCategory();
-        $categoryList = BlogCategory::all();
+        $categoryList = $this->blogCategoryRepository->getForComboBox();
 
         return view('blog.admin.categories.edit',
             compact('item', 'categoryList'));
@@ -67,21 +90,16 @@ class CategoryController extends BaseController
      * Show the form for editing the specified resource.
      *
      * @param  int $id
-     * @param BlogCategoryRepository $categoryRepository
      * @return \Illuminate\Http\Response
      */
-    public function edit($id, BlogCategoryRepository $categoryRepository)
+    public function edit($id)
     {
-        /*$item = BlogCategory::findOrFail($id);
-        $categoryList = BlogCategory::all();*/
-
-        $item = $categoryRepository->gerEdit($id);
-        if (empty($item))
-        {
+        $item = $this->blogCategoryRepository->gerEdit($id);
+        if (empty($item)) {
             abort(404);
         }
 
-        $categoryList = $categoryRepository->getForComboBox();
+        $categoryList = $this->blogCategoryRepository->getForComboBox();
 
         return view('blog.admin.categories.edit',
             compact('item', 'categoryList'));
@@ -96,7 +114,7 @@ class CategoryController extends BaseController
      */
     public function update(BlogCategoryUpdateRequest $request, $id)
     {
-        $item = BlogCategory::find($id);
+        $item = $this->blogCategoryRepository->gerEdit($id);
         if (empty($item)) {
             return back()
                 ->withErrors(['msg' => "Запись id=[{$id}] не найдена"])
